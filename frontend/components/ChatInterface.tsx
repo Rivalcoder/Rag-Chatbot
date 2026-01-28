@@ -23,18 +23,31 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ externalQuery }: ChatInterfaceProps) {
-    const [sessions, setSessions] = useState<ChatSession[]>(() => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [sessions, setSessions] = useState<ChatSession[]>([{
+        id: '1',
+        title: 'Initial Mission Briefing',
+        messages: [{ id: 1, text: "System Online. Connected to ISRO Mainframe.\nHello, I am your Mission Assistant. How can I help you today?", sender: 'ai' }],
+        timestamp: 1706428800000
+    }]);
+
+    useEffect(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('isro_chat_sessions');
-            return saved ? JSON.parse(saved) : [{
-                id: '1',
-                title: 'Initial Mission Briefing',
-                messages: [{ id: 1, text: "System Online. Connected to ISRO Mainframe.\nHello, I am your Mission Assistant. How can I help you today?", sender: 'ai' }],
-                timestamp: Date.now()
-            }];
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setSessions(parsed);
+                        setActiveSessionId(parsed[0].id);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse saved sessions:", e);
+                }
+            }
+            setIsLoaded(true);
         }
-        return [];
-    });
+    }, []);
     const [activeSessionId, setActiveSessionId] = useState<string>('1');
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -44,10 +57,10 @@ export default function ChatInterface({ externalQuery }: ChatInterfaceProps) {
     const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (isLoaded && typeof window !== 'undefined') {
             localStorage.setItem('isro_chat_sessions', JSON.stringify(sessions));
         }
-    }, [sessions]);
+    }, [sessions, isLoaded]);
 
     useEffect(() => {
         if (scrollRef.current) {

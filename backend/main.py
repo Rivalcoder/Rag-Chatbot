@@ -1,3 +1,18 @@
+import os
+import logging
+
+# 1. Set environment variables to suppress TensorFlow/oneDNN logs
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 3 = FATAL only
+
+# 2. Suppress warnings from Python's warnings module
+import warnings
+warnings.filterwarnings("ignore")
+
+# 3. Suppress Abseil (used by TensorFlow) logging
+logging.getLogger('absl').setLevel(logging.ERROR)
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -25,7 +40,7 @@ print(ingest_folder(UPLOAD_DIR))
 
 @app.get("/")
 def read_root():
-    return {"message": "ISRO AI Backend is Online"}
+    return {"message": "ISRO AI Backend is Online. Systems Nominal."}
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):

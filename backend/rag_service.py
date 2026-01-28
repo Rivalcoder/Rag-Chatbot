@@ -1,5 +1,11 @@
-from dotenv import load_dotenv
 import os
+# Suppress TensorFlow/OneDNN warnings
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -36,8 +42,10 @@ def ingest_document(file_path: str):
         splits = text_splitter.split_documents(documents)
         
         # Local Embeddings (free, runs on CPU/GPU)
+        print("DEBUG: Initializing Neural Core (Embeddings)...")
         embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2") 
-        
+        print("DEBUG: Neural Core Online.")
+
         if vector_store is None:
             vector_store = FAISS.from_documents(splits, embeddings)
         else:
@@ -72,7 +80,7 @@ def ingest_folder(folder_path: str):
 def query_rag(query: str):
     global vector_store
     if vector_store is None:
-        return "I haven't read any documents yet. Please upload one!"
+        return {"response": "I haven't read any documents yet. Please upload documents to the Archives to begin analysis.", "sources": []}
     
     # 1. Retrieve Docs
     docs = vector_store.similarity_search(query, k=4)
